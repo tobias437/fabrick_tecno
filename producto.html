@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Producto | FABRIC K TECNOLOGÍAS</title>
+<meta name="description" id="pageDesc" content="Consultá disponibilidad de este producto por WhatsApp — FABRIC K TECNOLOGÍAS.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%230B0D10%22/><text x=%2250%22 y=%2266%22 font-family=%22Arial%22 font-weight=%22800%22 font-size=%2252%22 fill=%22%23B8F23A%22 text-anchor=%22middle%22>FK</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="producto.html">
+
+<div id="site-header"></div>
+
+<main>
+  <section class="section section-dark" style="padding-top:130px;" id="productRoot">
+    <!-- injected -->
+  </section>
+
+  <section class="section section-dark" id="relatedSection" style="display:none;">
+    <h2 class="related-heading">También te puede interesar</h2>
+    <div class="product-grid" id="relatedGrid"></div>
+  </section>
+</main>
+
+<div id="site-footer"></div>
+<div id="floating-tools"></div>
+
+<script src="products.js"></script>
+<script src="render.js"></script>
+<script src="app.js"></script>
+<script>
+  function onPageReady(){
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get("slug");
+    const product = slug ? getProductBySlug(slug) : null;
+    const root = document.getElementById("productRoot");
+
+    if(!product){
+      root.innerHTML = `
+        <div class="not-found">
+          <span class="eyebrow">PRODUCTO NO DISPONIBLE</span>
+          <h1>No encontramos ese producto</h1>
+          <p>Puede que el link esté desactualizado. Probá buscando de nuevo o elegí una categoría.</p>
+          <div class="not-found-search">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8" fill="none"/><line x1="21" y1="21" x2="16.2" y2="16.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <input type="text" id="notFoundSearch" placeholder="Buscar productos...">
+          </div>
+          <div class="not-found-results" id="notFoundResults"></div>
+          <div class="not-found-cats">
+            ${CATEGORIES.map(c => `<a href="catalogo.html?categoria=${c.slug}" class="filter-chip">${c.name}</a>`).join("")}
+          </div>
+          <a href="${WSP_GENERIC}" target="_blank" rel="noopener" class="link-arrow" style="margin-top:22px;">
+            Prefiero consultar por WhatsApp <span class="arrow">→</span>
+          </a>
+        </div>`;
+
+      const nfInput = document.getElementById("notFoundSearch");
+      const nfResults = document.getElementById("notFoundResults");
+      nfInput.addEventListener("input", () => {
+        const q = nfInput.value.trim().toLowerCase();
+        if(q.length < 2){ nfResults.innerHTML = ""; return; }
+        const matches = PRODUCTS.filter(p =>
+          p.name.toLowerCase().includes(q) || p.tags.some(t => t.toLowerCase().includes(q))
+        ).slice(0,6);
+        nfResults.innerHTML = matches.length
+          ? matches.map(p => `<a class="search-result" href="producto.html?slug=${p.slug}"><span class="search-result-name">${p.name}</span><span class="search-result-price">${formatPrice(p)}</span></a>`).join("")
+          : `<p class="search-empty">No encontramos productos que coincidan con tu búsqueda.</p>`;
+      });
+      return;
+    }
+
+    document.getElementById("pageTitle").textContent = `${product.name} | FABRIC K TECNOLOGÍAS`;
+    document.getElementById("pageDesc").setAttribute("content", product.shortDescription);
+
+    const badges = [product.badge].filter(Boolean).map(b => `<span class="pc-badge pc-badge--${badgeClass(b)}" style="position:static;">${b}</span>`).join("");
+    const priceBlock = product.priceOnRequest || !product.price
+      ? `<div class="pd-price-row"><span class="pd-price">Consultar precio</span></div>`
+      : `<div class="pd-price-row">
+           ${product.oldPrice ? `<span class="pd-old">ARS ${product.oldPrice.toLocaleString("es-AR")}</span>` : ""}
+           <span class="pd-price">${formatPrice(product)}</span>
+           ${product.discount ? `<span class="pd-discount">-${product.discount}%</span>` : ""}
+         </div>`;
+
+    root.innerHTML = `
+      <div class="product-detail">
+        <div class="pd-gallery">
+          <div class="pd-media ${product.images.length ? 'pd-media--photo' : ''}" id="pdMainMedia">${product.images.length ? `<img src="${product.images[0]}" alt="${product.name}">` : categoryIcon(product.category)}</div>
+          ${product.images.length > 1 ? `
+          <div class="pd-thumbs">
+            ${product.images.map((src,i) => `<button class="pd-thumb ${i===0?'active':''}" data-src="${src}"><img src="${src}" alt=""></button>`).join("")}
+          </div>` : ""}
+        </div>
+        <div class="pd-info">
+          <span class="pd-cat">${categoryLabel(product.category)}</span>
+          <h1 class="pd-name">${product.name}</h1>
+          <div class="pd-badges">${badges}</div>
+          ${priceBlock}
+          <p class="pd-stock">${product.stock ? "Disponible" : "Sin stock"}</p>
+          <p class="pd-desc">${product.description}</p>
+          <div class="pd-cta">
+            <a href="${wspProductLink(product.name)}" target="_blank" rel="noopener" class="btn btn-primary">Consultar por WhatsApp</a>
+          </div>
+          <div class="pd-specs">
+            <h4>Características</h4>
+            <ul>${product.specifications.length ? product.specifications.map(s => `<li>${s}</li>`).join("") : `<li>[ESPECIFICACIONES A CONFIRMAR]</li>`}</ul>
+          </div>
+          <div class="pd-delivery">
+            <strong>Entrega:</strong> coordinamos envío o retiro según tu zona al confirmar la consulta por WhatsApp. [POLÍTICA DE ENVÍOS A CONFIRMAR]
+          </div>
+        </div>
+      </div>`;
+
+    if(product.images.length > 1){
+      const mainMedia = document.getElementById("pdMainMedia");
+      document.querySelectorAll(".pd-thumb").forEach(btn => {
+        btn.addEventListener("click", () => {
+          mainMedia.innerHTML = `<img src="${btn.dataset.src}" alt="${product.name}">`;
+          mainMedia.classList.add("pd-media--photo");
+          document.querySelectorAll(".pd-thumb").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+        });
+      });
+    }
+
+    const related = getRelated(product);
+    if(related.length){
+      document.getElementById("relatedSection").style.display = "";
+      renderGrid("relatedGrid", related, "dark");
+    }
+  }
+</script>
+</body>
+</html>
